@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import re
 from django.utils import six
 from django.utils.safestring import mark_safe
@@ -194,7 +195,7 @@ def _make_text_links_absolute(text, url_changes):
             continue
 
         # Avoid accidental replacements. Be strict in what kind of tokens should be around it.
-        text = re.sub(u'(^|[:.\s<\r\n])%s($|[>\s\r\n])' % old, ur"\1%s\2" % fixed, text)
+        text = re.sub(u'(^|[:.\s<\r\n])%s($|[>\s\r\n])' % old, r"\1%s\2" % fixed, text)
 
     # TODO: make sure the are no accidental replacements.
     return text
