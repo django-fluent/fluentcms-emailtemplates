@@ -1,0 +1,213 @@
+import re
+from django.utils import six
+from django.utils.safestring import mark_safe
+from bs4 import BeautifulSoup
+from urlparse import urlsplit, urljoin
+from django.contrib.auth.models import AnonymousUser
+from django.template import RequestContext
+from django.template.loader import render_to_string
+from django.test import RequestFactory
+from django.utils.six import iteritems
+from html2text import HTML2Text
+from html2text import config
+from fluent_contents import appsettings as fc_appsettings
+from parler.utils.context import switch_language
+
+SCALAR_TYPES = six.integer_types + six.string_types + (float,)
+CONFIG_DEFAULT = object()
+
+
+def html_to_text(html, base_url='', bodywidth=CONFIG_DEFAULT):
+    """
+    Convert a HTML mesasge to plain text.
+    """
+    h = HTML2Text(baseurl=base_url, bodywidth=config.BODY_WIDTH if bodywidth is CONFIG_DEFAULT else bodywidth)
+    return h.handle(html)
+
+
+def replace_fields(text, context):
+    """
+    Allow simple field replacements, using the python str.format() syntax.
+    """
+    # Not allowing full Django templates, which can also {% load %} stuff,
+    # and {% include %} things - If we'd go that route, it would require
+    # to have an isolated rendering engine with limited features.
+    try:
+        return text.format(**context)
+    except KeyError:
+        # Try to make the best of it.
+        # Maybe some items can be replaced, others don't
+        for key, value in iteritems(context):
+            if isinstance(value, SCALAR_TYPES):
+                text = re.sub('\{%s(:s)?\}' % key, value, text)
+
+    return text
+
+
+def render_email_template(email_template, base_url, extra_context=None, user=None):
+    """
+    Render the email template.
+
+    :type email_template: fluentcms_emailtemplates.models.EmailTemplate
+    :type base_url: str
+    :type extra_context: dict | None
+    :type user: django.contrib.auth.models.User
+    :return: The subject, html and text content
+    :rtype: EmailContent
+    """
+    dummy_request = _get_dummy_request(base_url, user)
+    context_user = user or extra_context.get('user', None)
+
+    context_data = {
+        'request': dummy_request,
+        'email_template': email_template,
+        'email_format': 'html',
+        'user': user,
+        # Common replacements
+        'first_name': context_user.first_name if context_user else '',
+        'last_name': context_user.last_name if context_user else '',
+        'full_name': context_user.get_full_name() if context_user else '',
+        'email': context_user.email if context_user else '',
+        'site': extra_context.get('site', None) or {
+            'domain': dummy_request.get_host(),
+            'name': dummy_request.get_host(),
+        }
+    }
+    if extra_context:
+        context_data.update(extra_context)
+
+    # Make sure the templates and i18n are identical to the emailtemplate language.
+    # This is the same as the current Django language, unless the object was explicitly fetched in a different language.
+    with switch_language(email_template):
+        # Get the body content
+        context_data['body'] = _render_email_placeholder(dummy_request, email_template, base_url, context_data)
+        context_data['subject'] = subject = replace_fields(email_template.subject, context_data)
+
+        # Merge that with the HTML templates.
+        context_instance = RequestContext(dummy_request)
+        context_instance.update(context_data)
+        html = render_to_string(email_template.get_html_templates(), context_instance=context_instance)
+        html, url_changes = _make_links_absolute(html, base_url)
+
+        # Render the Text template.
+        # Disable auto escaping
+        context_instance['email_format'] = 'text'
+        context_instance.autoescape = False
+        text = render_to_string(email_template.get_text_templates(), context_instance=context_instance)
+        text = _make_text_links_absolute(text, url_changes)
+
+        return EmailContent(subject, text, html)
+
+
+def _get_dummy_request(base_url, user):
+    """
+    Create a dummy request.
+    Use the ``base_url``, so code can use ``request.build_absolute_uri()`` to create absolute URLs.
+    """
+    split_url = urlsplit(base_url)
+    is_secure = split_url[0] == 'https'
+    dummy_request = RequestFactory(HTTP_HOST=split_url[1]).get('/', secure=is_secure)
+    dummy_request.is_secure = lambda: is_secure
+    dummy_request.user = user or AnonymousUser()
+    return dummy_request
+
+
+
+def _render_email_placeholder(request, email_template, base_url, context):
+    """
+    Internal rendering of the placeholder/contentitems.
+
+    This a simple variation of render_placeholder(),
+    making is possible to render both a HTML and text item in a single call.
+    Caching is currently not implemented.
+    """
+    placeholder = email_template.contents
+    items = placeholder.get_content_items(email_template)
+
+    if not items:  # NOTES: performs query
+        # There are no items, fetch the fallback language.
+        language_code = fc_appsettings.FLUENT_CONTENTS_DEFAULT_LANGUAGE_CODE
+        items = placeholder.get_content_items(email_template, limit_parent_language=False).translated(language_code)
+
+    html_fragments = []
+    text_fragments = []
+
+    for instance in items:
+        plugin = instance.plugin
+        html_fragments.append(_render_html(plugin, request, instance, context))
+        text_fragments.append(_render_text(plugin, request, instance, context, base_url))
+
+    html_body = u"".join(html_fragments)
+    text_body = u"".join(text_fragments)
+
+    return EmailBodyContent(text_body, html_body)
+
+
+def _render_html(plugin, request, instance, context):
+    if hasattr(plugin, 'render_html'):
+        # Our custom EmailContentPlugin
+        return plugin.render_html(request, instance, context)
+    else:
+        # Regular django-fluent-contents plugin
+        return plugin.render(request, instance)
+
+
+def _render_text(plugin, request, instance, context, base_url):
+    if hasattr(plugin, 'render_text'):
+        # Our custom EmailContentPlugin
+        return plugin.render_text(request, instance, context)
+    else:
+        # Regular django-fluent-contents plugin
+        return html_to_text(plugin.render(request, instance), base_url)
+
+
+def _make_links_absolute(html, base_url):
+    """
+    Make all links absolute.
+    """
+    url_changes = []
+
+    soup = BeautifulSoup(u"<div>{0}</div>".format(html))
+    for tag in soup.find_all('a', href=True):
+        old = tag['href']
+        fixed = urljoin(base_url, old)
+        if old != fixed:
+            url_changes.append((old, fixed))
+            tag['href'] = fixed
+
+    for tag in soup.find_all('img', src=True):
+        old = tag['src']
+        fixed = urljoin(base_url, old)
+        if old != fixed:
+            url_changes.append((old, fixed))
+            tag['src'] = fixed
+
+    return mark_safe(u"".join(unicode(tag) for tag in soup.body.contents)), url_changes
+
+
+def _make_text_links_absolute(text, url_changes):
+    # Order by length to avoid accidental text replacements
+    url_changes = sorted(url_changes, key=lambda item: (-len(item[0]), item[0]))
+    for old, fixed in url_changes:
+        # Don't replace this kind of URL:
+        if old == '/':
+            continue
+
+        # Avoid accidental replacements. Be strict in what kind of tokens should be around it.
+        text = re.sub(u'(^|[:.\s<\r\n])%s($|[>\s\r\n])' % old, ur"\1%s\2" % fixed, text)
+
+    # TODO: make sure the are no accidental replacements.
+    return text
+
+
+class EmailContent(object):
+    def __init__(self, subject, text, html):
+        self.subject = subject
+        self.text = text
+        self.html = html
+
+
+class EmailBodyContent(object):
+    def __init__(self, text, html):
+        self.text = text
+        self.html = html

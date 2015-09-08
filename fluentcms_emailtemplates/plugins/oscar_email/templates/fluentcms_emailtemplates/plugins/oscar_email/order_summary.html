@@ -1,0 +1,26 @@
+{% load i18n currency_filters %}
+    <table border="0" cellspacing="1" cellpadding="1" frameborder="0" rules="none" rows="none">
+      <tr valign="top">
+        <td><strong>{% trans "Your order" %}:</strong></td>
+        <td>
+            {% for line in order.lines.all %}
+            {{ line.quantity }} x {{ line.title }} {# line.line_price_incl_tax|currency:order_currency #}<br/>
+            {% endfor %}
+        </td>
+      </tr>
+      <tr valign="top"><td><strong>{% trans 'Order number' %}: &nbsp;</strong></td><td>{{ order.number }}</td></tr>
+      <tr valign="top"><td><strong>{% trans 'Date' %}: </strong></td><td>{{ order.date_placed }}</td></tr>
+
+      {% if order.total_incl_tax == 0 %}
+        <tr valign="top"><td><strong>{% trans 'Price' %}: </strong></td><td>{% trans "Free of charge" %}</td></tr>
+      {% else %}
+        <tr valign="top"><td><strong>{% trans 'Price' %}: </strong></td><td>{{ order.basket_total_incl_tax|currency:order_currency }}</td></tr>
+        <tr valign="top"><td><strong>{% trans 'Shipping' %}: </strong></td><td>{{ order.shipping_incl_tax|currency:order_currency }}</td></tr>
+        <tr valign="top"><td><strong>{% trans 'Order Total' %}: </strong></td><td>{{ order.total_incl_tax|currency:order_currency }}</td></tr>
+      {% endif %}
+
+      <tr valign="top"><td valign="top"><strong>{% trans 'Shipping address' %}: &nbsp;</strong></td><td>
+          {% for field in order.shipping_address.active_address_fields %}{{ field }}<br/>
+          {% endfor %}
+      </td></tr>
+    </table>

@@ -1,0 +1,11 @@
+{% load i18n currency_filters %}{% for line in order.lines.all %} * {{ line.quantity }} x {{ line.title }} {# line.line_price_incl_tax|currency:order_currency #}
+{% endfor %}
+{% trans 'Order number' %}: {{ order.number }}
+{% trans 'Date' %}: {{ order.date_placed }}
+{% trans 'Price' %}: {{ order.basket_total_incl_tax|currency:order_currency }}
+{% trans 'Shipping' %}: {{ order.shipping_incl_tax|currency:order_currency }}
+{% trans 'Order Total' %}: {{ order.total_incl_tax|currency:order_currency }}
+
+{% trans 'Shipping address' %}:
+{% for field in order.shipping_address.active_address_fields %}  {{ field }}
+{% endfor %}

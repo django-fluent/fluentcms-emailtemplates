@@ -1,0 +1,6 @@
+include AUTHORS
+include README.rst
+include LICENSE
+recursive-include fluentcms_googlemaps/locale *.po *.mo
+recursive-include fluentcms_googlemaps/templates *.html
+recursive-include fluentcms_googlemaps/static *.css *.js
