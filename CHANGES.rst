@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 0.2.1
+-------------
+
+* Fixed packaging error, omitted HTML templates
+
 Version 0.2
 -----------
 

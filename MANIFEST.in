@@ -1,6 +1,8 @@
 include AUTHORS
 include README.rst
 include LICENSE
-recursive-include fluentcms_googlemaps/locale *.po *.mo
-recursive-include fluentcms_googlemaps/templates *.html
-recursive-include fluentcms_googlemaps/static *.css *.js
+recursive-include fluentcms_emailtemplates/locale *.po *.mo
+recursive-include fluentcms_emailtemplates/templates *.html
+recursive-include fluentcms_emailtemplates/static *.css *.js
+recursive-include fluentcms_emailtemplates/plugins/*/static *
+recursive-include fluentcms_emailtemplates/plugins/*/templates *.html
