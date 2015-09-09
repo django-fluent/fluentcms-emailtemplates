@@ -17,11 +17,7 @@ class EmailTextPlugin(EmailContentPlugin):
 
     fieldsets = (
         (None, {
-            'fields': ('html',),
-        }),
-        (_("Other versions"), {
-            'fields': ('text',),
-            'classes': ('collapse',),
+            'fields': ('html', 'text'),
         }),
     )
 
