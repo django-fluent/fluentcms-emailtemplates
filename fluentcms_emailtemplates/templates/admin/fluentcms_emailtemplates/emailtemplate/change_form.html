@@ -3,6 +3,6 @@
 {% block object-tools-items %}
   {% with has_absolute_url=None %}{{ block.super }}{% endwith %}
 
+  <li><a href="{% url opts|admin_urlname:'preview' original.pk %}?format=text&amp;language={{ original.get_current_language }}" class="viewsitelink">{% trans "Preview Text" %}</a></li>
   <li><a href="{% url opts|admin_urlname:'preview' original.pk %}?format=html&amp;language={{ original.get_current_language }}" class="viewsitelink">{% trans "Preview HTML" %}</a></li>
-<li><a href="{% url opts|admin_urlname:'preview' original.pk %}?format=text&amp;language={{ original.get_current_language }}" class="viewsitelink">{% trans "Preview Text" %}</a></li>
 {% endblock %}
