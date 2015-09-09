@@ -101,7 +101,7 @@ class EmailContentPlugin(ContentPlugin):
         text = self.render_to_string(request, render_template, instance_context)
         text = text + ""  # Avoid being a safestring
         if self.render_replace_context_fields:
-            text = replace_fields(text + "", instance_context)
+            text = replace_fields(text, instance_context, autoescape=False)
         return text
 
     def render_to_string(self, request, template, context, content_instance=None):

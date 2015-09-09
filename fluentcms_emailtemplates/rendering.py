@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import cgi
 import logging
 import re
 from bs4 import BeautifulSoup
@@ -36,8 +37,25 @@ def html_to_text(html, base_url='', bodywidth=CONFIG_DEFAULT):
     """
     Convert a HTML mesasge to plain text.
     """
+    def _patched_handle_charref(c):
+        self = h
+        charref = self.charref(c)
+        if self.code or self.pre:
+            charref = cgi.escape(charref)
+        self.o(charref, 1)
+
+    def _patched_handle_entityref(c):
+        self = h
+        entityref = self.entityref(c)
+        if self.code or self.pre:  # this expression was inversed.
+            entityref = cgi.escape(entityref)
+        self.o(entityref, 1)
+
     h = HTML2Text(baseurl=base_url, bodywidth=config.BODY_WIDTH if bodywidth is CONFIG_DEFAULT else bodywidth)
+    h.handle_entityref = _patched_handle_entityref
+    h.handle_charref = _patched_handle_charref
     return h.handle(html).rstrip()
+
 
 
 def replace_fields(text, context, autoescape=None, raise_errors=False):
@@ -163,7 +181,7 @@ def render_email_template(email_template, base_url, extra_context=None, user=Non
     with switch_language(email_template):
         # Get the body content
         context_data['body'] = _render_email_placeholder(dummy_request, email_template, base_url, context_data)
-        context_data['subject'] = subject = replace_fields(email_template.subject, context_data)
+        context_data['subject'] = subject = replace_fields(email_template.subject, context_data, autoescape=False)
 
         # Merge that with the HTML templates.
         context_instance = RequestContext(dummy_request)
@@ -218,8 +236,10 @@ def _render_email_placeholder(request, email_template, base_url, context):
 
     for instance in items:
         plugin = instance.plugin
-        html_fragments.append(_render_html(plugin, request, instance, context))
-        text_fragments.append(_render_text(plugin, request, instance, context, base_url))
+        html_part = _render_html(plugin, request, instance, context)
+        text_part = _render_text(plugin, request, instance, context, base_url)
+        html_fragments.append(html_part)
+        text_fragments.append(text_part)
 
     html_body = u"".join(html_fragments)
     text_body = u"".join(text_fragments)

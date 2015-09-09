@@ -35,7 +35,7 @@ class EmailTextPlugin(EmailContentPlugin):
         if instance.text:
             # When a custom text is provided, use that.
             text = instance.text
-            text = replace_fields(text, context)
+            text = replace_fields(text, context, autoescape=False)
             return text
         else:
             # Otherwise, let the default implementation do it's work.
