@@ -295,7 +295,7 @@ def _make_links_absolute(html, base_url):
             url_changes.append((old, fixed))
             tag['src'] = fixed
 
-    return mark_safe(soup), url_changes
+    return mark_safe(six.text_type(soup)), url_changes
 
 
 def _make_text_links_absolute(text, url_changes):

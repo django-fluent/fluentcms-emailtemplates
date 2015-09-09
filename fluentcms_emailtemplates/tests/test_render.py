@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from django.test import TestCase
 from fluent_contents.models import Placeholder
 from fluentcms_emailtemplates.models import EmailTemplate
@@ -20,7 +21,7 @@ class RenderingTests(TestCase):
         p = Placeholder.objects.create_for_object(emailtemplate, slot='email_templates')
         EmailTextItem.objects.create_for_placeholder(
             placeholder=p,
-            html="<p>Hello {first_name}!</p><p>How are you?</p>"
+            html=u"<p>Hello {first_name}!</p><p>\xe9How are you?</p>"
         )
 
         content = emailtemplate.get_content(
@@ -28,8 +29,8 @@ class RenderingTests(TestCase):
             context={'first_name': "John"}
         )
 
-        expected_html = '<html><head><title>Hi John!</title></head>\n<body><div><p>Hello John!</p><p>How are you?</p></div>\n\n</body></html>'
-        expected_text = 'Hello John!\n\nHow are you?\n'
+        expected_html = u'<html><head><title>Hi John!</title></head>\n<body><div><p>Hello John!</p><p>\xe9How are you?</p></div>\n\n</body></html>'
+        expected_text = u'Hello John!\n\n\xe9How are you?\n'
 
         self.assertEqual(content.subject, "Hi John!")
         self.assertEqual(content.html, expected_html)
@@ -50,8 +51,8 @@ class RenderingTests(TestCase):
             context={'first_name': "<John>"}
         )
 
-        expected_html = '<html><head><title>Hi &lt;John&gt;!</title></head>\n<body><div><p>Hello &lt;John&gt;!</p><p>How are you?</p></div>\n\n</body></html>'
-        expected_text = 'Hello <John>!\n\nHow are you?\n'
+        expected_html = u'<html><head><title>Hi &lt;John&gt;!</title></head>\n<body><div><p>Hello &lt;John&gt;!</p><p>How are you?</p></div>\n\n</body></html>'
+        expected_text = u'Hello <John>!\n\nHow are you?\n'
 
         self.assertEqual(content.subject, "Hi <John>!")
         self.assertEqual(content.html, expected_html)

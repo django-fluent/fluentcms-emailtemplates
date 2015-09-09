@@ -34,3 +34,7 @@ class ReplaceFieldsTests(TestCase):
     def test_replace_invalid(self):
         result = replace_fields('Hello {aa} or {bb} and others', {'aa': 11}, errors='inline')
         self.assertEqual("Hello 11 or !!missing bb!! and others", result)
+
+    def test_replace_unicode(self):
+        result = replace_fields(u'Hello {aa} \xe9', {'aa': u'\xf6'}, errors='inline')
+        self.assertEqual(u"Hello \xf6 \xe9", result)
