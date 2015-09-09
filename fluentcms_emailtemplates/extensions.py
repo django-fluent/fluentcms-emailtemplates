@@ -1,5 +1,5 @@
 from fluent_contents.extensions import ContentPlugin, PluginContext
-from fluentcms_emailtemplates.rendering import html_to_text
+from fluentcms_emailtemplates.rendering import html_to_text, replace_fields
 
 
 class EmailContentPlugin(ContentPlugin):
@@ -13,9 +13,21 @@ class EmailContentPlugin(ContentPlugin):
     The regular rendering is provided as fallback,
     please use the :func:`render_html` and :func:`render_text` instead.
     """
+
+    #: The template to use for HTML rendering
     render_html_template = None
+
+    #: The template to use for plain text rendering.
+    #: When no template is given, the HTML output is used to generate the plain text version.
     render_text_template = None
+
+    #: Whether the parent context should be exposed to the plugin templates, and replace variables
     merge_parent_context = True
+
+    #: Whether the default :meth:`render_html` and :meth:`render_text` should call
+    #: the :func:`~fluentcms_emailtemplates.rendering.replace_fields` on the output.
+    render_replace_context_fields = False
+
 
     # -- Fallback logic
 
@@ -66,7 +78,11 @@ class EmailContentPlugin(ContentPlugin):
 
         instance_context = self.get_context(request, instance, email_format='html', parent_context=context)
         instance_context['email_format'] = 'html'
-        return self.render_to_string(request, render_template, instance_context)
+
+        html = self.render_to_string(request, render_template, instance_context)
+        if self.render_replace_context_fields:
+            html = replace_fields(html, instance_context)  # pass safe-string
+        return html
 
     def render_text(self, request, instance, context):
         """
@@ -81,7 +97,12 @@ class EmailContentPlugin(ContentPlugin):
 
         instance_context = self.get_context(request, instance, email_format='text', parent_context=context)
         instance_context['email_format'] = 'text'
-        return self.render_to_string(request, render_template, instance_context)
+
+        text = self.render_to_string(request, render_template, instance_context)
+        text = text + ""  # Avoid being a safestring
+        if self.render_replace_context_fields:
+            text = replace_fields(text + "", instance_context)
+        return text
 
     def render_to_string(self, request, template, context, content_instance=None):
         if content_instance is None:

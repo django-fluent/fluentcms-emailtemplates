@@ -13,6 +13,7 @@ class EmailTextPlugin(EmailContentPlugin):
     """
     model = EmailTextItem
     admin_init_template = "admin/fluentcms_emailtemplates/plugins/emailtext/admin_init.html"  # TODO: remove the need for this.
+    render_replace_context_fields = True
 
     fieldsets = (
         (None, {
@@ -25,13 +26,17 @@ class EmailTextPlugin(EmailContentPlugin):
     )
 
     def render_html(self, request, instance, context):
-        # Included in a DIV, so the next item will be displayed below.
-        return mark_safe(replace_fields(instance.html, context))
+        # Included in a DIV, so the next item will be displayed below it.
+        html = mark_safe(u"<div>{0}</div>".format(instance.html))
+        html = replace_fields(html, context)  # Do manually because render_html() was overwritten
+        return html
 
     def render_text(self, request, instance, context):
         if instance.text:
             # When a custom text is provided, use that.
-            return replace_fields(instance.text, context)
+            text = instance.text
+            text = replace_fields(text, context)
+            return text
         else:
             # Otherwise, let the default implementation do it's work.
             # It will base the text version off the HTML code.
