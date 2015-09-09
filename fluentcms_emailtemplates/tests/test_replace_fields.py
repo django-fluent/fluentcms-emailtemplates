@@ -10,17 +10,17 @@ class ReplaceFieldsTests(TestCase):
     """
 
     def test_replace_scalar(self):
-        result = replace_fields('Hello {subject}!', {'subject': "TEST"}, raise_errors=True)
+        result = replace_fields('Hello {subject}!', {'subject': "TEST"}, errors='raise')
         self.assertEqual("Hello TEST!", result)
 
-        result = replace_fields('Hello {aa} or {bb} and others', {'aa': 11, 'bb': 22}, raise_errors=True)
+        result = replace_fields('Hello {aa} or {bb} and others', {'aa': 11, 'bb': 22}, errors='raise')
         self.assertEqual("Hello 11 or 22 and others", result)
 
     def test_replace_scalar_format(self):
-        result = replace_fields('Hello {subject:s}!', {'subject': "TEST"}, raise_errors=True)
+        result = replace_fields('Hello {subject:s}!', {'subject': "TEST"}, errors='raise')
         self.assertEqual("Hello TEST!", result)
 
-        result = replace_fields('Hello {aa:.02f}', {'aa': 1.5}, raise_errors=True)
+        result = replace_fields('Hello {aa:.02f}', {'aa': 1.5}, errors='raise')
         self.assertEqual("Hello 1.50", result)
 
     def test_replace_object(self):
@@ -28,5 +28,9 @@ class ReplaceFieldsTests(TestCase):
             def __init__(self):
                 self.x = 2
 
-        result = replace_fields('test {foo.x}!', {'foo': Foo()}, raise_errors=True)
+        result = replace_fields('test {foo.x}!', {'foo': Foo()}, errors='raise')
         self.assertEqual("test 2!", result)
+
+    def test_replace_invalid(self):
+        result = replace_fields('Hello {aa} or {bb} and others', {'aa': 11}, errors='inline')
+        self.assertEqual("Hello 11 or !!missing bb!! and others", result)

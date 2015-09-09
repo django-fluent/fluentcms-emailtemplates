@@ -58,7 +58,7 @@ def html_to_text(html, base_url='', bodywidth=CONFIG_DEFAULT):
 
 
 
-def replace_fields(text, context, autoescape=None, raise_errors=False):
+def replace_fields(text, context, autoescape=None, errors='inline'):
     """
     Allow simple field replacements, using the python str.format() syntax.
 
@@ -68,6 +68,10 @@ def replace_fields(text, context, autoescape=None, raise_errors=False):
     This function is used instead of lazily using Django templates,
     which can also the {% load %} stuff and {% include %} things.
     """
+    raise_errors = errors == 'raise'
+    ignore_errors = errors == 'ignore'
+    inline_errors = errors == 'inline'
+
     if autoescape is None:
         # When passing a real template context, use it's autoescape setting.
         # Otherwise, default to true.
@@ -76,8 +80,10 @@ def replace_fields(text, context, autoescape=None, raise_errors=False):
     is_safe_string = isinstance(text, SafeData)
     if is_safe_string and autoescape:
         escape_function = conditional_escape
+        escape_error = lambda x: u"<span style='color:red;'>{0}</span>".format(x)
     else:
         escape_function = force_text
+        escape_error = six.text_type
 
     # Using str.format() may raise a KeyError when some fields are not provided.
     # Instead, simulate its' behavior to make sure all items that were found will be replaced.
@@ -92,13 +98,14 @@ def replace_fields(text, context, autoescape=None, raise_errors=False):
         try:
             value = context[key]
         except KeyError:
+            logger.debug("Missing key %s in email template %s!", key, match.group(0))
             if raise_errors:
                 raise
-            else:
-                # Leave untouched
-                logger.debug("Missing key %s in email template %s!", key, match.group(0))
+            elif ignore_errors:
                 new_text.append(match.group(0))
-                continue
+            elif inline_errors:
+                new_text.append(escape_error("!!missing {0}!!".format(key)))
+            continue
 
         # See if further processing is needed.
         attr = match.group('attr')
@@ -106,13 +113,14 @@ def replace_fields(text, context, autoescape=None, raise_errors=False):
             try:
                 value = getattr(value, attr)
             except AttributeError:
+                logger.debug("Missing attribute %s in email template %s!", attr, match.group(0))
                 if raise_errors:
                     raise
-                else:
-                    # Leave untouched
-                    logger.debug("Missing attribute %s in email template %s!", attr, match.group(0))
+                elif ignore_errors:
                     new_text.append(match.group(0))
-                    continue
+                elif inline_errors:
+                    new_text.append(escape_error("!!invalid attribute {0}.{1}!!".format(key, attr)))
+                continue
 
         format = match.group('format')
         if format:
@@ -120,13 +128,14 @@ def replace_fields(text, context, autoescape=None, raise_errors=False):
                 template = u"{0" + format + "}"
                 value = template.format(value)
             except ValueError:
+                logger.debug("Invalid format %s in email template %s!", format, match.group(0))
                 if raise_errors:
                     raise
-                else:
-                    # Leave untouched
-                    logger.debug("Invalid format %s in email template %s!", format, match.group(0))
+                elif ignore_errors:
                     new_text.append(match.group(0))
-                    continue
+                elif inline_errors:
+                    new_text.append(escape_error("!!invalid format {0}!!".format(format)))
+                continue
         else:
             value = escape_function(value)
 
