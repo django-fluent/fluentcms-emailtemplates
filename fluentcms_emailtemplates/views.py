@@ -1,8 +1,7 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
+from django.utils import six
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy as _
-from django.views.generic import DetailView
 from django.views.generic.detail import BaseDetailView
 from fluentcms_emailtemplates.models import EmailTemplate
 from fluentcms_emailtemplates.rendering import render_email_template
@@ -43,6 +42,6 @@ class EmailPreviewView(StaffMemberRequiredMixin, LanguageChoiceMixin, BaseDetail
 
         email = context['email']
         if format in ('text', 'txt'):
-            return HttpResponse(unicode(email.text), content_type='text/plain; charset=utf8')
+            return HttpResponse(six.text_type(email.text), content_type='text/plain; charset=utf8')
         else:
-            return HttpResponse(unicode(email.html), content_type='text/html; charset=utf8')
+            return HttpResponse(six.text_type(email.html), content_type='text/html; charset=utf8')
