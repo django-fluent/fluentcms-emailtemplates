@@ -1,10 +1,15 @@
 Changelog
 =========
 
+Version 0.2.2
+-------------
+
+* Fixed packaging errors, omitted plain text templates
+
 Version 0.2.1
 -------------
 
-* Fixed packaging error, omitted HTML templates
+* Fixed packaging errors, omitted HTML templates
 
 Version 0.2
 -----------
