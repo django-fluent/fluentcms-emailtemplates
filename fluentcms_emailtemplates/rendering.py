@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
+import logging
 import re
 from django.utils import six
+from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from bs4 import BeautifulSoup
 from urlparse import urlsplit, urljoin
@@ -8,14 +10,25 @@ from django.contrib.auth.models import AnonymousUser
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.test import RequestFactory
-from django.utils.six import iteritems
 from html2text import HTML2Text
 from html2text import config
 from fluent_contents import appsettings as fc_appsettings
 from parler.utils.context import switch_language
 
 SCALAR_TYPES = six.integer_types + six.string_types + (float,)
+OBJECT_TYPES = (object,)
 CONFIG_DEFAULT = object()
+
+# Parse str.format() syntax.
+# Does not support dict[item] but this is not expected to be needed.
+# https://docs.python.org/2/library/string.html#formatstrings
+RE_FORMAT = re.compile(
+    '\{(?P<var>[a-zA-Z0-9_]+)'       # a simple python var name
+    '(\.(?P<attr>[a-zA-Z0-9_]+))?'   # dot + attribute
+    '(?P<format>:[^}]+)?\}'          # str.format() can use any char as fill
+)
+
+logger = logging.getLogger(__name__)
 
 
 def html_to_text(html, base_url='', bodywidth=CONFIG_DEFAULT):
@@ -26,23 +39,71 @@ def html_to_text(html, base_url='', bodywidth=CONFIG_DEFAULT):
     return h.handle(html)
 
 
-def replace_fields(text, context):
+def replace_fields(text, context, raise_errors=False):
     """
     Allow simple field replacements, using the python str.format() syntax.
     """
     # Not allowing full Django templates, which can also {% load %} stuff,
     # and {% include %} things - If we'd go that route, it would require
     # to have an isolated rendering engine with limited features.
-    try:
-        return text.format(**context)
-    except KeyError:
-        # Try to make the best of it.
-        # Maybe some items can be replaced, others don't
-        for key, value in iteritems(context):
-            if isinstance(value, SCALAR_TYPES):
-                text = re.sub('\{%s(:s)?\}' % key, value, text)
 
-    return text
+    # Using str.format() may raise a KeyError when some fields are not provided.
+    # Instead, simulate its' behavior to make sure all items that were found will be replaced.
+    start = 0
+    new_text = []
+    for match in RE_FORMAT.finditer(text):
+        new_text.append(text[start:match.start()])
+
+        # See if the element was found
+        key = match.group('var')
+        try:
+            value = context[key]
+        except KeyError:
+            if raise_errors:
+                raise
+            else:
+                # Leave untouched
+                logger.debug("Missing key %s in email template %s!", key, match.group(0))
+                new_text.append(match.group(0))
+                continue
+
+        # See if further processing is needed.
+        attr = match.group('attr')
+        if attr:
+            try:
+                value = getattr(value, attr)
+            except AttributeError:
+                if raise_errors:
+                    raise
+                else:
+                    # Leave untouched
+                    logger.debug("Missing attribute %s in email template %s!", attr, match.group(0))
+                    new_text.append(match.group(0))
+                    continue
+
+        format = match.group('format')
+        if format:
+            try:
+                template = u"{0" + format + "}"
+                value = template.format(value)
+            except ValueError:
+                if raise_errors:
+                    raise
+                else:
+                    # Leave untouched
+                    logger.debug("Invalid format %s in email template %s!", format, match.group(0))
+                    new_text.append(match.group(0))
+                    continue
+        else:
+            value = force_text(value)
+
+        # Add the value
+        new_text.append(value)
+        start = match.end()
+
+    # Add remainder
+    new_text.append(text[start:])
+    return u"".join(new_text)
 
 
 def render_email_template(email_template, base_url, extra_context=None, user=None):
@@ -54,7 +115,7 @@ def render_email_template(email_template, base_url, extra_context=None, user=Non
     :type extra_context: dict | None
     :type user: django.contrib.auth.models.User
     :return: The subject, html and text content
-    :rtype: EmailContent
+    :rtype: fluentcms_emailtemplates.rendering.EmailContent
     """
     dummy_request = _get_dummy_request(base_url, user)
     context_user = user or extra_context.get('user', None)
@@ -121,6 +182,8 @@ def _render_email_placeholder(request, email_template, base_url, context):
     This a simple variation of render_placeholder(),
     making is possible to render both a HTML and text item in a single call.
     Caching is currently not implemented.
+
+    :rtype: fluentcms_emailtemplates.rendering.EmailBodyContent
     """
     placeholder = email_template.contents
     items = placeholder.get_content_items(email_template)
