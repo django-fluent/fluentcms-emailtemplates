@@ -85,6 +85,7 @@ def replace_fields(text, context, autoescape=None, raise_errors=False):
     new_text = []
     for match in RE_FORMAT.finditer(text):
         new_text.append(text[start:match.start()])
+        start = match.end()
 
         # See if the element was found
         key = match.group('var')
@@ -131,7 +132,6 @@ def replace_fields(text, context, autoescape=None, raise_errors=False):
 
         # Add the value
         new_text.append(value)
-        start = match.end()
 
     # Add remainder, and join
     new_text.append(text[start:])
