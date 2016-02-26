@@ -1,8 +1,13 @@
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import get_model
 from fluentcms_emailtemplates.extensions import EmailContentPlugin
 from fluent_contents.extensions import plugin_pool
 from .models import OrderSummaryEmailItem
+
+try:
+    from django.apps import apps  # Django 1.7+
+    get_model = apps.get_model
+except ImportError:
+    from django.db.models import get_model
 
 
 @plugin_pool.register
