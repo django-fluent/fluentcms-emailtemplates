@@ -27,6 +27,10 @@ Then add the following settings::
         'fluentcms_emailtemplates.plugins.emailtext',
     )
 
+    FLUENTCMS_EMAILTEMPLATES_PLUGINS = ( 
+        'EmailTextPlugin',
+    )
+
 The database tables can be created afterwards::
 
     ./manage.py migrate
@@ -48,7 +52,9 @@ The following settings are defined by default:
 
     # Possible plugins to use in the email template.
     # By default, that is FLUENT_CONTENTS_PLACEHOLDER_CONFIG['email_templates']
-    FLUENTCMS_EMAILTEMPLATES_PLUGINS = None
+    FLUENTCMS_EMAILTEMPLATES_PLUGINS = ( 
+        'EmailTextPlugin',
+    )
 
     # Add extras context data for an e-mail preview.
     FLUENTCMS_EMAILTEMPLATES_PREVIEW_CONTEXT = {}
