@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 0.2.4
+-------------
+
+* Fixed Django 1.9 errors
+
 Version 0.2.3
 -------------
 
