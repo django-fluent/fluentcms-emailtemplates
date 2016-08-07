@@ -11,11 +11,15 @@ from django.contrib.auth.models import AnonymousUser
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.test import RequestFactory
-from urlparse import urlsplit, urljoin
 from html2text import HTML2Text
 from html2text import config
 from fluent_contents import appsettings as fc_appsettings
 from parler.utils.context import switch_language
+
+try:
+    from urllib.parse import urlsplit, urljoin
+except ImportError:
+    from urlparse import urlsplit, urljoin  # Python 2
 
 SCALAR_TYPES = six.integer_types + six.string_types + (float,)
 OBJECT_TYPES = (object,)
