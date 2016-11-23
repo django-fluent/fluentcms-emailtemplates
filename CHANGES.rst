@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 0.2.5 (2016-11-23)
+--------------------------
+
+* Fixed Python 3 import path.
+* Fixed usage in a site with Wagtail settings context processor.
+
 Version 0.2.4
 -------------
 
