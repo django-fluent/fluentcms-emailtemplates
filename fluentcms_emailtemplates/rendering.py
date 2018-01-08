@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import cgi
 import logging
+import django
 import re
 from bs4 import BeautifulSoup
 from django.utils import six
@@ -199,14 +200,20 @@ def render_email_template(email_template, base_url, extra_context=None, user=Non
         # Merge that with the HTML templates.
         context_instance = RequestContext(dummy_request)
         context_instance.update(context_data)
-        html = render_to_string(email_template.get_html_templates(), context_instance=context_instance)
+        if django.VERSION >= (1, 10):
+            html = render_to_string(email_template.get_html_templates(), context_instance.flatten(), request=dummy_request)
+        else:
+            html = render_to_string(email_template.get_html_templates(), context_instance=context_instance)
         html, url_changes = _make_links_absolute(html, base_url)
 
         # Render the Text template.
         # Disable auto escaping
         context_instance['email_format'] = 'text'
         context_instance.autoescape = False
-        text = render_to_string(email_template.get_text_templates(), context_instance=context_instance)
+        if django.VERSION >= (1, 10):
+            text = render_to_string(email_template.get_text_templates(), context_instance.flatten(), request=dummy_request)
+        else:
+            text = render_to_string(email_template.get_text_templates(), context_instance=context_instance)
         text = _make_text_links_absolute(text, url_changes)
 
         return EmailContent(subject, text, html)
