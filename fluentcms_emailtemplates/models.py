@@ -11,6 +11,11 @@ from fluentcms_emailtemplates.managers import EmailTemplateManager
 from parler.models import TranslatableModel, TranslatedFields
 from parler.utils.context import switch_language
 
+try:
+    from django.urls import reverse  # Django 1.10+
+except ImportError:
+    from django.core.urlresolvers import reverse
+
 __all__ = (
     'EmailContentItem',
     'EmailTemplate',
