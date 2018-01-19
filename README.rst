@@ -25,13 +25,17 @@ Features:
 Installation
 ============
 
-First install the module, preferably in a virtual environment. It can be installed from PyPI::
+First install the module, preferably in a virtual environment. It can be installed from PyPI:
+
+.. code-block:: bash
 
     pip install fluentcms-emailtemplates
 
 First make sure the project is configured for django-fluent-contents_.
 
-Then add the following settings::
+Then add the following settings:
+
+.. code-block:: python
 
     INSTALLED_APPS += (
         'fluentcms_emailtemplates',
@@ -42,7 +46,9 @@ Then add the following settings::
         'EmailTextPlugin',
     )
 
-The database tables can be created afterwards::
+The database tables can be created afterwards:
+
+.. code-block:: bash
 
     ./manage.py migrate
 
