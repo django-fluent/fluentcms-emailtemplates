@@ -1,6 +1,19 @@
 fluentcms-emailtemplates
 ========================
 
+.. image:: https://img.shields.io/travis/django-fluent/fluentcms-emailtemplates/master.svg?branch=master
+    :target: http://travis-ci.org/django-fluent/fluentcms-emailtemplates
+.. image:: https://img.shields.io/pypi/v/fluentcms-emailtemplates.svg
+    :target: https://pypi.python.org/pypi/fluentcms-emailtemplates/
+.. image:: https://img.shields.io/pypi/dm/fluentcms-emailtemplates.svg
+    :target: https://pypi.python.org/pypi/fluentcms-emailtemplates/
+.. image:: https://img.shields.io/badge/wheel-yes-green.svg
+    :target: https://pypi.python.org/pypi/fluentcms-emailtemplates/
+.. image:: https://img.shields.io/pypi/l/fluentcms-emailtemplates.svg
+    :target: https://pypi.python.org/pypi/fluentcms-emailtemplates/
+.. image:: https://img.shields.io/codecov/c/github/django-fluent/fluentcms-emailtemplates/master.svg
+    :target: https://codecov.io/github/django-fluent/fluentcms-emailtemplates?branch=master
+
 An email template system, that uses django-fluent-contents_ blocks to define the e-mail templates.
 
 Features:

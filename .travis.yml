@@ -1,0 +1,45 @@
+language: python
+sudo: false
+cache: pip
+python:
+- '3.6'
+- '3.4'
+- '2.7'
+env:
+- PACKAGES="django>=1.7.0,<1.8.0 django-polymorphic<1.3"
+- PACKAGES="django>=1.8.0,<1.9.0"
+- PACKAGES="django>=1.9.0,<1.10.0"
+- PACKAGES="django>=1.10.0,<1.11.0"
+- PACKAGES="django>=1.11.0,<1.12.0"
+matrix:
+  exclude:
+  - python: '3.6'
+    env: PACKAGES="django>=1.7.0,<1.8.0 django-polymorphic<1.3"
+before_install:
+- pip install -U pip wheel setuptools
+- pip install codecov
+install:
+- pip install -q $PACKAGES -e .
+script:
+- coverage run --rcfile=.coveragerc runtests.py
+after_success:
+- codecov
+branches:
+  only:
+  - master
+notifications:
+  irc:
+    channels:
+    - irc.freenode.org#django-fluent
+    template:
+    - '%{repository}#%{build_number} (%{commit}) %{message}  --  %{build_url}'
+    skip_join: true
+  email:
+    recipients:
+    - travis@edoburu.nl
+    on_success: never
+    on_failure: always
+  slack:
+    secure: CJ+oORfxdm/EQDbIbQ8VZmPLgA15wohO7tv5RpgZXnuTBIWrWE/DwGULqms8P6qiDgHyvR/S8g2wGdaS2HXdz/aDpPPfypyRJJu9y1mupuv1tG2NkN7+7qmjRhjTrn9vvo5I8GaEGKtGVh5jMeahsZkqrYykmLB9rsHoyhZwNmo=
+    on_success: never
+    on_failure: always
