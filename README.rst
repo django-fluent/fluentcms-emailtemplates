@@ -5,8 +5,6 @@ fluentcms-emailtemplates
     :target: http://travis-ci.org/django-fluent/fluentcms-emailtemplates
 .. image:: https://img.shields.io/pypi/v/fluentcms-emailtemplates.svg
     :target: https://pypi.python.org/pypi/fluentcms-emailtemplates/
-.. image:: https://img.shields.io/pypi/dm/fluentcms-emailtemplates.svg
-    :target: https://pypi.python.org/pypi/fluentcms-emailtemplates/
 .. image:: https://img.shields.io/badge/wheel-yes-green.svg
     :target: https://pypi.python.org/pypi/fluentcms-emailtemplates/
 .. image:: https://img.shields.io/pypi/l/fluentcms-emailtemplates.svg
