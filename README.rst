@@ -107,6 +107,9 @@ Use the following code to create an email:
 
     email.send()
 
+Tip: when creating a separate template for the plain-text email, start the template with ``{% autoescape off %}``.
+This avoids creating HTML entities inside the plain-text email.
+
 
 Contributing
 ------------
