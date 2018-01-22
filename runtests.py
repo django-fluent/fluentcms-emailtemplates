@@ -13,6 +13,12 @@ sys.stderr.write('Using Django version {0} from {1}\n'.format(
 )
 
 if not settings.configured:
+    template_options = {}
+    if django.VERSION >= (1, 10):
+        template_options = {
+            'autoescape': False,  # TODO: remove this!!
+        }
+
     settings.configure(
         DATABASES = {
             'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:',},
@@ -31,7 +37,6 @@ if not settings.configured:
                 'BACKEND': 'django.template.backends.django.DjangoTemplates',
                 'DIRS': (),
                 'OPTIONS': {
-                    'autoescape': False,  # TODO: remove this!!
                     'loaders': (
                         'django.template.loaders.filesystem.Loader',
                         'django.template.loaders.app_directories.Loader',
@@ -44,6 +49,7 @@ if not settings.configured:
                         'django.template.context_processors.static',
                         'django.contrib.auth.context_processors.auth',
                     ),
+                    **template_options
                 },
             },
         ],
