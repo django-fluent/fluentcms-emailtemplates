@@ -6,17 +6,20 @@ python:
 - '3.4'
 - '2.7'
 env:
-- PACKAGES="django>=1.8.0,<1.9.0 django-polymorphic<2.0"
-- PACKAGES="django>=1.9.0,<1.10.0 django-polymorphic<2.0"
-- PACKAGES="django>=1.10.0,<1.11.0 django-polymorphic<2.0"
-- PACKAGES="django>=1.11.0,<1.12.0"
+- PACKAGES="django>=1.10,<1.11 django-polymorphic<2.0"
+- PACKAGES="django>=1.11,<1.12"
+- PACKAGES="django>=2.0,<2.1"
+matrix:
+  exclude:
+  - python: '2.7'
+    env: PACKAGES="django>=2.0,<2.1"
 before_install:
 - pip install -U pip wheel setuptools
 - pip install codecov
 install:
 - pip install $PACKAGES -e .
 script:
-- coverage run --rcfile=.coveragerc runtests.py
+- coverage run --source=fluentcms_emailtemplates runtests.py
 after_success:
 - codecov
 branches:

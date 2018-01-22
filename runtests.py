@@ -13,30 +13,6 @@ sys.stderr.write('Using Django version {0} from {1}\n'.format(
 )
 
 if not settings.configured:
-    TEMPLATES = [
-        {
-            'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'DIRS': (),
-            'OPTIONS': {
-                'loaders': (
-                    'django.template.loaders.filesystem.Loader',
-                    'django.template.loaders.app_directories.Loader',
-                ),
-                'context_processors': (
-                    'django.template.context_processors.debug',
-                    'django.template.context_processors.i18n',
-                    'django.template.context_processors.media',
-                    'django.template.context_processors.request',
-                    'django.template.context_processors.static',
-                    'django.contrib.auth.context_processors.auth',
-                ),
-            },
-        },
-    ]
-
-    if django.VERSION >= (1, 10):
-        TEMPLATES[0]['OPTIONS']['autoescape'] = False  # TODO: remove this!!
-
     settings.configure(
         DATABASES = {
             'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:',},
@@ -50,8 +26,27 @@ if not settings.configured:
             'fluentcms_emailtemplates',
             'fluentcms_emailtemplates.plugins.emailtext',
         ),
-        TEMPLATES = TEMPLATES,
-        MIDDLEWARE_CLASSES = (),
+        TEMPLATES = [
+            {
+                'BACKEND': 'django.template.backends.django.DjangoTemplates',
+                'DIRS': (),
+                'OPTIONS': {
+                    'loaders': (
+                        'django.template.loaders.filesystem.Loader',
+                        'django.template.loaders.app_directories.Loader',
+                    ),
+                    'context_processors': (
+                        'django.template.context_processors.debug',
+                        'django.template.context_processors.i18n',
+                        'django.template.context_processors.media',
+                        'django.template.context_processors.request',
+                        'django.template.context_processors.static',
+                        'django.contrib.auth.context_processors.auth',
+                    ),
+                },
+            },
+        ],
+        MIDDLEWARE = (),
         TEST_RUNNER = 'django.test.runner.DiscoverRunner',
     )
 
