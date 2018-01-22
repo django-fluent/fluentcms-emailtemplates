@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='EmailTextItem',
             fields=[
-                ('contentitem_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='fluent_contents.ContentItem')),
+                ('contentitem_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='fluent_contents.ContentItem', on_delete=models.CASCADE)),
                 ('html', fluent_contents.extensions.PluginHtmlField(help_text='Placeholders such as <code>{first_name}</code>, <code>{last_name}</code> and <code>{full_name}</code> can be used here.', verbose_name='Text')),
                 ('text', models.TextField(help_text='If left empty, the HTML contents will be used to generate a plain-text version.', null=True, verbose_name='Plain text version', blank=True)),
             ],

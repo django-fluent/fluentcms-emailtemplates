@@ -2,7 +2,6 @@ from email.utils import formataddr
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
-from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
@@ -48,7 +47,7 @@ class EmailTemplate(TranslatableModel):
     sender_email = models.EmailField(_("Sender email"), blank=True, null=True)
 
     # Multisite support
-    parent_site = models.ForeignKey(Site, editable=False, default=settings.SITE_ID)
+    parent_site = models.ForeignKey(Site, on_delete=models.CASCADE, editable=False, default=settings.SITE_ID)
     is_cross_site = models.BooleanField(_("Share between all sites"), blank=True, default=False,
         help_text=_("This allows contents to be shared between multiple sites in this project.<br>\n"
                     "Make sure that any URLs in the content work with all sites where the content is displayed."))
