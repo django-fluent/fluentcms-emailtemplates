@@ -1,13 +1,8 @@
+from django.apps import apps
 from django.core.exceptions import ImproperlyConfigured
 from fluentcms_emailtemplates.extensions import EmailContentPlugin
 from fluent_contents.extensions import plugin_pool
 from .models import OrderSummaryEmailItem
-
-try:
-    from django.apps import apps  # Django 1.7+
-    get_model = apps.get_model
-except ImportError:
-    from django.db.models import get_model
 
 
 @plugin_pool.register
@@ -29,7 +24,7 @@ class OrderSummaryEmailPlugin(EmailContentPlugin):
             context['order_currency'] = 'USD'
 
             if 'order_number' in context:
-                Order = get_model('order', "Order")
+                Order = apps.get_model('order', "Order")
                 number = context['order_number']
                 try:
                     order = Order.objects.get(number=number)
